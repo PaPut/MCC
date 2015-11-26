@@ -1,0 +1,71 @@
+<!DOCTYPE>
+<html ng-app="calendarApp"> <!-- refers to calendarApp variable in controller.js -->
+<head>
+  <!-- Bootstrap -->
+  <!-- Latest compiled and minified CSS -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" integrity="sha512-dTfge/zgoMYpP7QbHy4gWMEGsbsdZeCXz7irItjcC3sPUFtf0kuFbDz/ixG7ArTxmDjLXDmezHubeNikyKGVyQ==" crossorigin="anonymous">
+  <!-- Optional theme -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css" integrity="sha384-aUGj/X2zp5rLCbBxumKTCw2Z50WgIr1vs/PFN4praOTvYXWlVyh2UtNUU0KAUhAX" crossorigin="anonymous">
+  <title>Calendar</title>
+</head>
+<body>
+  <div class="container" ng-controller="AppCtrl">
+    <h1>Calendar</h1>
+
+    <table class="table">
+      <thead>
+        <tr>
+          <Input type="text" class="form-control" ng-model="searchText" placeholder="Filter">
+        </tr>
+        <tr>
+          <tr>
+            <th>&nbsp;</th>
+            <th>&nbsp;</th>
+            <th>VIEWS</th>
+            <th><a href="./month.html" class="btn btn-default" role="button">Month</a></th>
+            <th><a href="./day.html" class="btn btn-default" role="button">Day</a></th>
+          </tr>
+        </tr>
+        <tr>
+          <th type="hidden"></th>
+          <th type="hidden"></th>
+          <th>Name</th>
+          <th>Start</th>
+          <th>End</th>
+          <th>Description</th>
+          <th>Action</th>
+          <th>&nbsp;</th>
+        </tr>
+
+      </thead>
+      <tbody>
+        <tr>
+          <td><Input type="hidden" size="0" class="form-control" ng-model="event.googId"></td>
+          <td><Input type="hidden" size="0" class="form-control" ng-model="event._id"></td>
+          <td><Input class="form-control" ng-model="event.name"></td>
+          <td><Input type="datetime-local" ng-model-options="{ timezone: '+0000' }" class="form-control" ng-model="event.start"></td>
+          <td><Input type="datetime-local" ng-model-options="{ timezone: '+0000' }" class="form-control" ng-model="event.end"></td>
+          <td><Input class="form-control" ng-model="event.description"></td>
+          <td><button class="btn btn-primary" ng-click="addEvent()">Add Event</button></td>
+          <td><button class="btn btn-info" ng-click="update()">Update</button></td>
+          <td><button class="btn btn-info" ng-click="deselect()">Clear</button></td>
+        </tr>
+        <tr ng-repeat="event in events | filter:searchText">
+          <th type="hidden"></th>
+          <th type="hidden"></th>
+          <td>{{event.name}}</td>
+          <td>{{event.start}}</td>
+          <td>{{event.end}}</td>
+          <td>{{event.description}}</td>
+          <td><button class="btn btn-danger" ng-click="remove(event._id, event.googId)">Remove</button></td>
+          <td><button class="btn btn-warning" ng-click="edit(event._id, event.googId)">Edit</button></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <!-- AngularJS -->
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.7/angular.min.js">
+  </script>
+  <script src="controllers/controller.js"></script>
+</body>
+</html>
