@@ -52,4 +52,11 @@
         android:textSize="12sp"
         android:editable="false"
         android:id="@+id/my_edit"/>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Add Event"
+        android:id="@+id/addEventButton"
+        android:layout_gravity="center_horizontal" />
 </LinearLayout>
