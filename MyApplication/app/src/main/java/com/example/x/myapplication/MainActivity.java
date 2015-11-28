@@ -73,13 +73,8 @@ public class MainActivity extends Activity implements OnClickListener {
         protected String doInBackground(Void... params) {
             HttpClient httpClient = new DefaultHttpClient();
             HttpContext localContext = new BasicHttpContext();
-<<<<<<< HEAD
             HttpGet httpGet = new HttpGet("http://10.0.2.2:3000/events");
             String text = "";
-=======
-            HttpGet httpGet = new HttpGet("http://172.16.41.167:3000/events");
-            String text = null;
->>>>>>> 30ccc29cf3739e45ffb8d0e88c2fdcfb2e988a3e
             try {
                 HttpResponse response = httpClient.execute(httpGet, localContext);
 
