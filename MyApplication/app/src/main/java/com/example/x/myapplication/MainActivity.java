@@ -16,6 +16,12 @@ package com.example.x.myapplication;
         import android.view.View.OnClickListener;
         import android.widget.Button;
         import android.widget.EditText;
+
+        import org.apache.http.util.EntityUtils;
+        import org.json.JSONArray;
+        import org.json.JSONException;
+        import org.json.JSONObject;
+
 public class MainActivity extends Activity implements OnClickListener {
     @Override
 
@@ -36,12 +42,13 @@ public class MainActivity extends Activity implements OnClickListener {
         Button b = (Button)findViewById(R.id.my_button);
 
 
-        b.setClickable(false);
+        b.setClickable(true);
         new LongRunningGetIO().execute();
     }
 
     private class LongRunningGetIO extends AsyncTask <Void, Void, String> {
-        protected String getASCIIContentFromEntity(HttpEntity entity) throws IllegalStateException, IOException {
+
+        /*protected String getASCIIContentFromEntity(HttpEntity entity) throws IllegalStateException, IOException {
             InputStream in = entity.getContent();
 
 
@@ -57,7 +64,7 @@ public class MainActivity extends Activity implements OnClickListener {
 
 
             return out.toString();
-        }
+        }*/
 
 
         @Override
@@ -66,16 +73,39 @@ public class MainActivity extends Activity implements OnClickListener {
         protected String doInBackground(Void... params) {
             HttpClient httpClient = new DefaultHttpClient();
             HttpContext localContext = new BasicHttpContext();
-            HttpGet httpGet = new HttpGet("http://192.168.0.103:3000/events");
-            String text = null;
+            HttpGet httpGet = new HttpGet("http://10.0.2.2:3000/events");
+            String text = "";
             try {
                 HttpResponse response = httpClient.execute(httpGet, localContext);
 
 
                 HttpEntity entity = response.getEntity();
 
+                if (entity != null) {
+                    String retSrc = EntityUtils.toString(entity);
 
-                text = getASCIIContentFromEntity(entity);
+                    JSONArray jsonArray = new JSONArray(retSrc);
+
+                    for(int i=0; i < jsonArray.length(); i++){
+                        JSONObject jsonObject = jsonArray.getJSONObject(i);
+
+                        String name = jsonObject.optString("name").toString();
+                        String start = jsonObject.optString("start").toString();
+                        String end = jsonObject.optString("end").toString();
+                        String description = jsonObject.optString("description").toString();
+
+                        if (description == "null") {
+                            description = "";
+                        }
+
+                        text += name + "\nStart Date: "+ start +" \nEnd Date: "+ end +" \nDescription: "+ description +" \n\n";
+                    }
+                }
+
+
+
+
+                // text = getASCIIContentFromEntity(entity);
 
 
             } catch (Exception e) {
