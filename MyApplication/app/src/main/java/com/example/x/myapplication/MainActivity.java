@@ -31,6 +31,7 @@ package com.example.x.myapplication;
         import org.json.JSONArray;
         import org.json.JSONObject;
 
+        import java.lang.reflect.Array;
         import java.util.ArrayList;
         import java.util.Calendar;
         import java.util.List;
@@ -48,8 +49,6 @@ public class MainActivity extends Activity implements OnClickListener {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         findViewById(R.id.my_button).setOnClickListener(this);
-        deleteItem("");
-        getCalendars();
 
         Button addEvent = (Button)findViewById(R.id.addEventButton);
 
@@ -105,8 +104,6 @@ public class MainActivity extends Activity implements OnClickListener {
             cal.setTimeInMillis(cur.getLong(3));
 
             if(cur.getString(0).equals(title) && cur.getString(1).equals(description) && Math.abs(cur.getLong(3)-end)<100000){
-
-                System.out.println("Sama");
                 contains = true;
             }
         }
@@ -125,33 +122,41 @@ public class MainActivity extends Activity implements OnClickListener {
     cur.close();
 
     }
-    //Printout for calendars in android
-    public void getCalendars() {
+    //Get calendar of Phone and add the missing to Cloud
+
+    public void getCalendarAndAdd(ArrayList<String> descriptions, ArrayList<String> titles, ArrayList<Long> endmillis) {
 
         long calID = 1;
         long startMillis = 0;
         long endMillis = 0;
+        boolean add = true;
         ContentResolver cr = getContentResolver();
         ContentValues values = new ContentValues();
         Cursor cur = null;
         Uri uri = CalendarContract.Events.CONTENT_URI;
-        Calendar beginTime = Calendar.getInstance();
-        beginTime.set(2015, 11, 28, 7, 30);
-        startMillis = beginTime.getTimeInMillis();
-        Calendar endTime = Calendar.getInstance();
-        endTime.set(2015, 11, 28, 8, 45);
-        endMillis = endTime.getTimeInMillis();
-        cur = cr.query(uri, new String[]{CalendarContract.Events.TITLE, CalendarContract.Events.ACCOUNT_NAME, CalendarContract.Events.CALENDAR_ID,CalendarContract.Events.DTEND}, null, null, null);
+
+        cur = cr.query(uri, new String[]{CalendarContract.Events.TITLE, CalendarContract.Events.DESCRIPTION, CalendarContract.Events.DTSTART,CalendarContract.Events.DTEND}, null, null, null);
 
         while (cur.moveToNext()) {
+            add = true;
+            System.out.println(cur.getString(0));
 
-           /* System.out.println(cur.getString(0));
-            System.out.println(cur.getString(1));
-            System.out.println(cur.getString(2));
-            Calendar cal = Calendar.getInstance();
-            cal.setTimeInMillis(cur.getLong(3));
-            System.out.println(cal.getTime());*/
-
+            for(int i = 0; i< descriptions.size();i++){
+                if(descriptions.get(i).equals(cur.getString(1)) && titles.get(i).equals(cur.getString(0))){
+                    System.out.println("____"+descriptions.get(i)+cur.getString(1));
+                    add = false;
+                }
+            }
+            if(add){
+            System.out.println("pitäisi lisätä");
+            Calendar cal1 = Calendar.getInstance();
+            cal1.setTimeInMillis(cur.getLong(3));
+            Calendar cal2 = Calendar.getInstance();
+            cal2.setTimeInMillis(cur.getLong(2));
+            //yyyy-MM-dd'T    'HH:mm:ss.SSSZ"
+            AddEvent newEVENT = new AddEvent(cur.getString(0),cal2.get(Calendar.YEAR)+"-"+cal2.get(Calendar.MONTH)+"-"+cal2.get(Calendar.DATE)+"'T'"+cal2.get(Calendar.HOUR)+":"+cal2.get(Calendar.MINUTE)+":"+cal2.get(Calendar.SECOND)+".SSSZ",cal1.get(Calendar.YEAR)+"-"+cal1.get(Calendar.MONTH)+"-"+cal1.get(Calendar.DATE)+"'T'"+cal1.get(Calendar.HOUR)+":"+cal1.get(Calendar.MINUTE)+":"+cal1.get(Calendar.SECOND)+".SSSZ", cur.getString(1));
+            newEVENT.post();
+        }
         }
         cur.close();
     }
@@ -186,8 +191,6 @@ public class MainActivity extends Activity implements OnClickListener {
 
     public void onClick(View arg0) {
         Button b = (Button)findViewById(R.id.my_button);
-
-        getCalendars();
         b.setClickable(true);
         new LongRunningGetIO().execute();
     }
@@ -221,6 +224,9 @@ public class MainActivity extends Activity implements OnClickListener {
                     String retSrc = EntityUtils.toString(entity);
 
                     JSONArray jsonArray = new JSONArray(retSrc);
+                    ArrayList<String> titles = new ArrayList<String>();
+                    ArrayList<String> descriptions = new ArrayList<String>();
+                    ArrayList<Long> ends = new ArrayList<Long>();
 
                     for(int i=0; i < jsonArray.length(); i++){
                         String text = "";
@@ -229,11 +235,14 @@ public class MainActivity extends Activity implements OnClickListener {
                         String id = jsonObject.optString("_id").toString();
                         String id2 = jsonObject.optString("googId").toString();
                         String name = jsonObject.optString("name").toString();
+                        titles.add(name);
                         String start = jsonObject.optString("start").toString();
                         String end = jsonObject.optString("end").toString();
+                        ends.add(parseToMillis(end));
                         String description = jsonObject.optString("description").toString();
+                        descriptions.add(description);
                         //FOR event adding
-                        addEvent(name, parseToMillis(start),parseToMillis(end),description);
+                        addEvent(name, parseToMillis(start), parseToMillis(end), description);
                         if (description == "null") {
                             description = "";
                         }
@@ -243,6 +252,7 @@ public class MainActivity extends Activity implements OnClickListener {
                         text += name + "\nStart Date: "+ start +" \nEnd Date: "+ end +" \nDescription: "+ description +" \n\n";
                         events.add(text);
                     }
+                    getCalendarAndAdd(descriptions,titles,ends);
                 }
             } catch (Exception e) {
 
