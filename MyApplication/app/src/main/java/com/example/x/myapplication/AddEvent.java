@@ -67,6 +67,18 @@ public class AddEvent extends ActionBarActivity {
     Calendar myCalendar = Calendar.getInstance();
 
 
+    public AddEvent(String name, String start, String end, String description){
+        this.name = name;
+        this.start = start;
+        this.end = end;
+        this.description = description;
+        System.out.println("Luotu AddEvent");
+    }
+    public AddEvent(){
+
+
+    }
+
     // DatePicker dialog for the start date (month, day and year)
     DatePickerDialog.OnDateSetListener startDate = new DatePickerDialog.OnDateSetListener() {
 
@@ -170,6 +182,13 @@ public class AddEvent extends ActionBarActivity {
     }
 
     // Help-function for updating the start and end EditTexts
+    public void post(){
+        System.out.println("Postit");
+        postData postData = new postData();
+        postData.execute();
+        Intent intent=new Intent(AddEvent.this, MainActivity.class);
+        startActivity(intent);
+    }
     private void updateLabel(EditText e) {
 
         String dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
@@ -187,7 +206,7 @@ public class AddEvent extends ActionBarActivity {
             HttpPost httpPost = new HttpPost("http://10.0.2.2:3000/events");
 
             try {
-
+                System.out.println("POST");
                 JSONObject jsonObject = new JSONObject();
                 jsonObject.put("name", name);
                 jsonObject.put("start", start);
