@@ -36,30 +36,47 @@ public class MainActivity extends Activity implements OnClickListener {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         findViewById(R.id.my_button).setOnClickListener(this);
+        deleteItem("");
         getCalendars();
     }
 
 
     // Adding the new events
     public void addEvent(String title, long start, long end, String description){
-
+        Boolean contains = false;
         ContentResolver cr = getContentResolver();
         ContentValues values = new ContentValues();
         Cursor cur = null;
         Uri uri = CalendarContract.Events.CONTENT_URI;
-
         long calID = 1;
         TimeZone tz = TimeZone.getDefault();
         cr = getContentResolver();
         uri = CalendarContract.Events.CONTENT_URI;
-        values.put(CalendarContract.Events.DTSTART, start);
-        values.put(CalendarContract.Events.DTEND, end);
-        values.put(CalendarContract.Events.TITLE, title);
-        values.put(CalendarContract.Events.DESCRIPTION, description);
-        values.put(CalendarContract.Events.CALENDAR_ID, calID);
-        values.put(CalendarContract.Events.EVENT_TIMEZONE, tz.getID());
-        // long eventID = Long.parseLong(uri.getLastPathSegment());
-        cr.insert(uri, values);
+        cur = cr.query(uri, new String[]{CalendarContract.Events.TITLE, CalendarContract.Events.DESCRIPTION, CalendarContract.Events.CALENDAR_ID,CalendarContract.Events.DTEND}, null, null, null);
+
+        while (cur.moveToNext()) {
+            Calendar cal = Calendar.getInstance();
+            cal.setTimeInMillis(cur.getLong(3));
+
+            if(cur.getString(0).equals(title) && cur.getString(1).equals(description) && Math.abs(cur.getLong(3)-end)<100000){
+
+                System.out.println("Sama");
+                contains = true;
+            }
+        }
+
+        if(!contains) {
+            System.out.println("Lisättiin");
+            values.put(CalendarContract.Events.DTSTART, start);
+            values.put(CalendarContract.Events.DTEND, end);
+            values.put(CalendarContract.Events.TITLE, title);
+            values.put(CalendarContract.Events.DESCRIPTION, description);
+            values.put(CalendarContract.Events.CALENDAR_ID, calID);
+            values.put(CalendarContract.Events.EVENT_TIMEZONE, tz.getID());
+            // long eventID = Long.parseLong(uri.getLastPathSegment());
+            cr.insert(uri, values);
+        }
+    cur.close();
 
     }
     //Printout for calendars in android
@@ -82,14 +99,15 @@ public class MainActivity extends Activity implements OnClickListener {
 
         while (cur.moveToNext()) {
 
-            System.out.println(cur.getString(0));
+           /* System.out.println(cur.getString(0));
             System.out.println(cur.getString(1));
             System.out.println(cur.getString(2));
             Calendar cal = Calendar.getInstance();
             cal.setTimeInMillis(cur.getLong(3));
-            System.out.println(cal.getTime());
+            System.out.println(cal.getTime());*/
 
         }
+        cur.close();
     }
 
     //The changes doesn't happen always instantly, f.ex. after restart program can be seen
@@ -109,12 +127,12 @@ public class MainActivity extends Activity implements OnClickListener {
 
         while (cur.moveToNext()) {
             if(cur.getString(1).contains(query)){
-                System.out.println("Del");
+                System.out.println("Del"+cur.getString(1));
                 Uri deleteUri = ContentUris.withAppendedId(uri,cur.getLong(0));
                 System.out.println(getContentResolver().delete(deleteUri, null, null));
             }
         }
-
+        cur.close();
 
     }
     @Override
@@ -151,7 +169,6 @@ public class MainActivity extends Activity implements OnClickListener {
             String[] parsed = json.replace("+"," ").split(" |-|T|:");
 
             Calendar beginTime = Calendar.getInstance();
-            System.out.println(parsed[0]);
             beginTime.set(Integer.parseInt(parsed[0]), Integer.parseInt(parsed[1]), Integer.parseInt(parsed[2]), Integer.parseInt(parsed[3]), Integer.parseInt(parsed[4]));
             return beginTime.getTimeInMillis();
 
