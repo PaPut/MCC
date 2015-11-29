@@ -253,6 +253,8 @@ app.get('/events', function(req, res) {
 app.post('/events', function(req, res) {
 
   var bod = req.body;
+  bod.start = new Date(bod.start);
+  bod.end = new Date(bod.end);
   console.log(req.body);
   // Tässä googId, menee tämän hetkisen ajan mukaan (millisekunnit ml.)
   bod.updated = null;

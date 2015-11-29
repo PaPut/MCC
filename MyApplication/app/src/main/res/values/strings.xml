@@ -1,4 +1,9 @@
 <resources>
     <string name="app_name">My Application</string>
     <string name="action_settings">Settings</string>
+    <string name="title_update">Test</string>
+    <string name="update_title">test</string>
+    <string name="update_start">update_start</string>
+    <string name="update_end">update_end</string>
+    <string name="update_description">update_description</string>
 </resources>
