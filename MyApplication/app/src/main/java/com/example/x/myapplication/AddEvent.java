@@ -1,5 +1,7 @@
 package com.example.x.myapplication;
 
+import com.example.x.myapplication.MainActivity;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -18,6 +20,7 @@ import org.apache.http.protocol.HttpContext;
 import android.app.ActionBar;
 import android.app.Activity;
 import android.app.DatePickerDialog;
+import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -28,6 +31,7 @@ import android.view.View.OnClickListener;
 import android.widget.Button;
 import android.widget.DatePicker;
 import android.widget.EditText;
+import android.widget.TimePicker;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -62,7 +66,29 @@ public class AddEvent extends ActionBarActivity {
 
     Calendar myCalendar = Calendar.getInstance();
 
-    DatePickerDialog.OnDateSetListener date = new DatePickerDialog.OnDateSetListener() {
+    DatePickerDialog.OnDateSetListener startDate = new DatePickerDialog.OnDateSetListener() {
+
+        @Override
+        public void onDateSet(DatePicker view, int year, int monthOfYear,
+                          int dayOfMonth) {
+            myCalendar.set(Calendar.YEAR, year);
+            myCalendar.set(Calendar.MONTH, monthOfYear);
+            myCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+            updateLabel(start1);
+        }
+
+    };
+
+    TimePickerDialog.OnTimeSetListener startTime = new TimePickerDialog.OnTimeSetListener() {
+        @Override
+        public void onTimeSet(TimePicker view, int hourOfDay, int minuteOfHour) {
+            myCalendar.set(Calendar.HOUR_OF_DAY, hourOfDay);
+            myCalendar.set(Calendar.MINUTE, minuteOfHour);
+            updateLabel(start1);
+        }
+    };
+
+    DatePickerDialog.OnDateSetListener endDate = new DatePickerDialog.OnDateSetListener() {
 
         @Override
         public void onDateSet(DatePicker view, int year, int monthOfYear,
@@ -70,9 +96,17 @@ public class AddEvent extends ActionBarActivity {
             myCalendar.set(Calendar.YEAR, year);
             myCalendar.set(Calendar.MONTH, monthOfYear);
             myCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
-            updateLabel();
+            updateLabel(end1);
         }
+    };
 
+    TimePickerDialog.OnTimeSetListener endTime = new TimePickerDialog.OnTimeSetListener() {
+        @Override
+        public void onTimeSet(TimePicker view, int hourOfDay, int minuteOfHour) {
+            myCalendar.set(Calendar.HOUR_OF_DAY, hourOfDay);
+            myCalendar.set(Calendar.MINUTE, minuteOfHour);
+            updateLabel(end1);
+        }
     };
 
     @Override
@@ -90,8 +124,21 @@ public class AddEvent extends ActionBarActivity {
 
             @Override
             public void onClick(View v) {
-                // TODO Auto-generated method stub
-                new DatePickerDialog(AddEvent.this, date, myCalendar
+                new TimePickerDialog(AddEvent.this, startTime, myCalendar
+                        .get(Calendar.HOUR_OF_DAY), myCalendar.get(Calendar.MINUTE), true).show();
+                new DatePickerDialog(AddEvent.this, startDate, myCalendar
+                        .get(Calendar.YEAR), myCalendar.get(Calendar.MONTH),
+                        myCalendar.get(Calendar.DAY_OF_MONTH)).show();
+            }
+        });
+
+        end1.setOnClickListener(new OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                new TimePickerDialog(AddEvent.this, endTime, myCalendar
+                        .get(Calendar.HOUR_OF_DAY), myCalendar.get(Calendar.MINUTE), true).show();
+                new DatePickerDialog(AddEvent.this, endDate, myCalendar
                         .get(Calendar.YEAR), myCalendar.get(Calendar.MONTH),
                         myCalendar.get(Calendar.DAY_OF_MONTH)).show();
             }
@@ -112,12 +159,12 @@ public class AddEvent extends ActionBarActivity {
         });
     }
 
-    private void updateLabel() {
+    private void updateLabel(EditText e) {
 
-        String myFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
-        SimpleDateFormat sdf = new SimpleDateFormat(myFormat, Locale.ROOT);
+        String dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
+        SimpleDateFormat sdf = new SimpleDateFormat(dateFormat, Locale.ROOT);
 
-        start1.setText(sdf.format(myCalendar.getTime()));
+        e.setText(sdf.format(myCalendar.getTime()));
     }
 
     class postData extends AsyncTask<Void, Void, String> {
@@ -135,18 +182,13 @@ public class AddEvent extends ActionBarActivity {
                 jsonObject.put("end", end);
                 jsonObject.put("description", description);
 
-                Log.i("myTag", name + " " + start + " " + end + " " + description);
-                Log.i("myTag", jsonObject.toString());
+                if (jsonObject != null) {
+                    httpPost.setHeader("Accept", "application/json");
+                    httpPost.setHeader("Content-type", "application/json");
 
-                // List<NameValuePair> nameValuePairs = new ArrayList<NameValuePair>();
-                // nameValuePairs.add(new BasicNameValuePair("req", jsonObject.toString()));
-
-                httpPost.setHeader("Accept", "application/json");
-                httpPost.setHeader("Content-type", "application/json");
-
-                httpPost.setEntity(new StringEntity(jsonObject.toString()));
-                HttpResponse response = httpClient.execute(httpPost);
-
+                    httpPost.setEntity(new StringEntity(jsonObject.toString()));
+                    HttpResponse response = httpClient.execute(httpPost);
+                }
 
             } catch (Exception e) {
                 e.printStackTrace();

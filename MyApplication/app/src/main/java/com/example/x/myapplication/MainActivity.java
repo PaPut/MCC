@@ -17,22 +17,33 @@ package com.example.x.myapplication;
         import android.os.AsyncTask;
         import android.os.Bundle;
         import android.provider.CalendarContract;
+        import android.util.Log;
         import android.view.View;
         import android.view.View.OnClickListener;
+        import android.widget.AdapterView;
+        import android.widget.ArrayAdapter;
         import android.widget.Button;
         import android.widget.EditText;
+        import android.widget.ListView;
+        import android.widget.TextView;
 
         import org.apache.http.util.EntityUtils;
         import org.json.JSONArray;
         import org.json.JSONObject;
 
+        import java.util.ArrayList;
         import java.util.Calendar;
+        import java.util.List;
         import java.util.TimeZone;
 
 public class MainActivity extends Activity implements OnClickListener {
+
+    List<String> eventIds = new ArrayList<String>();
+    List<String> googIds = new ArrayList<String>();
+    String eventId;
+    String googId;
+
     @Override
-
-
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
@@ -48,6 +59,29 @@ public class MainActivity extends Activity implements OnClickListener {
                 startActivity(intent);
             }
         });
+
+        ListView list = (ListView)findViewById(R.id.eventList);
+        list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View viewClicked, int position, long id) {
+                TextView textView = (TextView) viewClicked;
+                eventId = eventIds.get(position);
+                googId = googIds.get(position);
+
+                Intent intent = new Intent(MainActivity.this, ViewEvent.class);
+
+                intent.putExtra("id", eventId);
+                intent.putExtra("googId", googId);
+
+                String[] data = textView.getText().toString().split("\n");
+                intent.putExtra("data", data);
+
+
+                startActivity(intent);
+            }
+        });
+
+        new LongRunningGetIO().execute();
     }
 
 
@@ -140,7 +174,7 @@ public class MainActivity extends Activity implements OnClickListener {
         new LongRunningGetIO().execute();
     }
 
-    private class LongRunningGetIO extends AsyncTask <Void, Void, String> {
+    private class LongRunningGetIO extends AsyncTask <Void, Void, List<String>> {
 
         //Parsing from json to millis
         protected long parseToMillis(String json){
@@ -155,11 +189,11 @@ public class MainActivity extends Activity implements OnClickListener {
         }
         @Override
 
-        protected String doInBackground(Void... params) {
+        protected List<String> doInBackground(Void... params) {
             HttpClient httpClient = new DefaultHttpClient();
             HttpContext localContext = new BasicHttpContext();
             HttpGet httpGet = new HttpGet("http://10.0.2.2:3000/events");
-            String text = "";
+            List<String> events = new ArrayList<String>();
             try {
                 HttpResponse response = httpClient.execute(httpGet, localContext);
 
@@ -172,32 +206,39 @@ public class MainActivity extends Activity implements OnClickListener {
                     JSONArray jsonArray = new JSONArray(retSrc);
 
                     for(int i=0; i < jsonArray.length(); i++){
+                        String text = "";
                         JSONObject jsonObject = jsonArray.getJSONObject(i);
 
+                        String id = jsonObject.optString("_id").toString();
+                        String id2 = jsonObject.optString("googId").toString();
                         String name = jsonObject.optString("name").toString();
                         String start = jsonObject.optString("start").toString();
                         String end = jsonObject.optString("end").toString();
                         String description = jsonObject.optString("description").toString();
                         //FOR event adding
-                        addEvent(name,parseToMillis(start),parseToMillis(end),description);
+                        addEvent(name, parseToMillis(start),parseToMillis(end),description);
                         if (description == "null") {
                             description = "";
                         }
 
+                        eventIds.add(id);
+                        googIds.add(id2);
                         text += name + "\nStart Date: "+ start +" \nEnd Date: "+ end +" \nDescription: "+ description +" \n\n";
+                        events.add(text);
                     }
                 }
             } catch (Exception e) {
-                return e.getLocalizedMessage();
+
             }
-            return text;
+            return events;
         }
 
 
-        protected void onPostExecute(String results) {
+        protected void onPostExecute(List<String> results) {
             if (results!=null) {
-                EditText et = (EditText)findViewById(R.id.my_edit);
-                et.setText(results);
+                ArrayAdapter<String> adapter = new ArrayAdapter<String>(MainActivity.this, R.layout.textview_events, results);
+                ListView list = (ListView)findViewById(R.id.eventList);
+                list.setAdapter(adapter);
             }
             Button b = (Button)findViewById(R.id.my_button);
             b.setClickable(true);
