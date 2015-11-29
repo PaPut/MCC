@@ -73,6 +73,10 @@ public class AddEvent extends ActionBarActivity {
         this.description = description;
         System.out.println("Luotu AddEvent");
     }
+    public AddEvent(){
+
+
+    }
     DatePickerDialog.OnDateSetListener startDate = new DatePickerDialog.OnDateSetListener() {
 
         @Override
