@@ -8,6 +8,7 @@ package com.example.x.myapplication;
         import org.apache.http.protocol.BasicHttpContext;
         import org.apache.http.protocol.HttpContext;
         import android.app.Activity;
+        import android.app.DatePickerDialog;
         import android.content.Intent;
         import android.content.ContentResolver;
         import android.content.ContentUris;
@@ -23,6 +24,7 @@ package com.example.x.myapplication;
         import android.widget.AdapterView;
         import android.widget.ArrayAdapter;
         import android.widget.Button;
+        import android.widget.DatePicker;
         import android.widget.EditText;
         import android.widget.ListView;
         import android.widget.TextView;
@@ -38,10 +40,14 @@ package com.example.x.myapplication;
 
 public class MainActivity extends Activity implements OnClickListener {
 
-    List<String> eventIds = new ArrayList<String>();
-    List<String> googIds = new ArrayList<String>();
+    List<String> eventIds = new ArrayList<String>(); // List of event IDs
+    List<String> googIds = new ArrayList<String>();  // List of events' googIds
     String eventId;
     String googId;
+    EditText month; // TODO
+    String monthText; // TODO
+
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -52,6 +58,7 @@ public class MainActivity extends Activity implements OnClickListener {
 
         Button addEvent = (Button)findViewById(R.id.addEventButton);
 
+        // When the addEvent button is clicked it takes us to activity_addevent
         addEvent.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -60,9 +67,11 @@ public class MainActivity extends Activity implements OnClickListener {
             }
         });
 
+        // ListView for events
         ListView list = (ListView)findViewById(R.id.eventList);
         list.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
+            // When an item is clicked, it takes you to the event's page (activity_single_event)
             public void onItemClick(AdapterView<?> parent, View viewClicked, int position, long id) {
                 TextView textView = (TextView) viewClicked;
                 eventId = eventIds.get(position);
@@ -70,6 +79,7 @@ public class MainActivity extends Activity implements OnClickListener {
 
                 Intent intent = new Intent(MainActivity.this, ViewEvent.class);
 
+                // This allows these variables to be available in the ViewEvent class
                 intent.putExtra("id", eventId);
                 intent.putExtra("googId", googId);
 
@@ -80,6 +90,8 @@ public class MainActivity extends Activity implements OnClickListener {
                 startActivity(intent);
             }
         });
+
+
 
         new LongRunningGetIO().execute();
     }
@@ -189,6 +201,7 @@ public class MainActivity extends Activity implements OnClickListener {
         }
         @Override
 
+        // GETs the events and adds them to the ListView
         protected List<String> doInBackground(Void... params) {
             HttpClient httpClient = new DefaultHttpClient();
             HttpContext localContext = new BasicHttpContext();

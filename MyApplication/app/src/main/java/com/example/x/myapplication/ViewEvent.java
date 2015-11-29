@@ -127,6 +127,7 @@ public class ViewEvent extends ActionBarActivity {
 
     }
 
+    // Update function
     class updateData extends AsyncTask<Void, Void, String> {
 
         @Override
@@ -160,6 +161,7 @@ public class ViewEvent extends ActionBarActivity {
 
     }
 
+    // DELETE request
     class deleteData extends AsyncTask<Void, Void, String> {
 
         @Override
@@ -178,10 +180,7 @@ public class ViewEvent extends ActionBarActivity {
     }
 
 
-
-
-
-
+    // Same as in MainActivity
     Calendar myCalendar = Calendar.getInstance();
 
     DatePickerDialog.OnDateSetListener startDate = new DatePickerDialog.OnDateSetListener() {

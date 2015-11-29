@@ -66,6 +66,8 @@ public class AddEvent extends ActionBarActivity {
 
     Calendar myCalendar = Calendar.getInstance();
 
+
+    // DatePicker dialog for the start date (month, day and year)
     DatePickerDialog.OnDateSetListener startDate = new DatePickerDialog.OnDateSetListener() {
 
         @Override
@@ -79,6 +81,7 @@ public class AddEvent extends ActionBarActivity {
 
     };
 
+    // TimePicker dialog for the start date (hour and minute)
     TimePickerDialog.OnTimeSetListener startTime = new TimePickerDialog.OnTimeSetListener() {
         @Override
         public void onTimeSet(TimePicker view, int hourOfDay, int minuteOfHour) {
@@ -88,6 +91,7 @@ public class AddEvent extends ActionBarActivity {
         }
     };
 
+    // DatePicker dialog for the end date (month, day and year)
     DatePickerDialog.OnDateSetListener endDate = new DatePickerDialog.OnDateSetListener() {
 
         @Override
@@ -100,6 +104,7 @@ public class AddEvent extends ActionBarActivity {
         }
     };
 
+    // TimePicker dialog for the end date (hour and minute)
     TimePickerDialog.OnTimeSetListener endTime = new TimePickerDialog.OnTimeSetListener() {
         @Override
         public void onTimeSet(TimePicker view, int hourOfDay, int minuteOfHour) {
@@ -114,12 +119,15 @@ public class AddEvent extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_addevent);
 
+
+        // EditTexts from activity_addevent
         name1 = (EditText)findViewById(R.id.editTitle);
         start1 = (EditText)findViewById(R.id.editStart);
         end1 = (EditText)findViewById(R.id.editEnd);
         description1 = (EditText)findViewById(R.id.editDescription);
         submitEvent = (Button)findViewById(R.id.submitEvent);
 
+        // When the start EditText is clicked it shows the previously defined Time and Datepicker dialogs
         start1.setOnClickListener(new OnClickListener() {
 
             @Override
@@ -132,6 +140,7 @@ public class AddEvent extends ActionBarActivity {
             }
         });
 
+        // When the end EditText is clicked it shows the previously defined Time and Datepicker dialogs
         end1.setOnClickListener(new OnClickListener() {
 
             @Override
@@ -144,6 +153,7 @@ public class AddEvent extends ActionBarActivity {
             }
         });
 
+        // Listener for the submitEvent button, executes the postData method
         submitEvent.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -159,6 +169,7 @@ public class AddEvent extends ActionBarActivity {
         });
     }
 
+    // Help-function for updating the start and end EditTexts
     private void updateLabel(EditText e) {
 
         String dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
@@ -167,6 +178,7 @@ public class AddEvent extends ActionBarActivity {
         e.setText(sdf.format(myCalendar.getTime()));
     }
 
+    // Function for POSTing an event to the server
     class postData extends AsyncTask<Void, Void, String> {
 
         @Override

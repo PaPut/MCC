@@ -35,12 +35,37 @@
         android:text="REFRESH"
         android:id="@+id/my_button"/>
 
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:layout_weight="0.84">
+
+        <Spinner
+            android:id="@+id/spinner1"
+            android:layout_width="177dp"
+            android:layout_height="wrap_content"
+            android:background="@android:drawable/btn_dropdown"
+            android:spinnerMode="dropdown"
+            android:layout_weight="0.07" />
+
+        <Button
+            style="?android:attr/buttonStyleSmall"
+            android:layout_width="10dp"
+            android:layout_height="wrap_content"
+            android:text="Select"
+            android:id="@+id/monthButton"
+            android:layout_weight="0.07"
+            android:layout_gravity="center_vertical" />
+    </LinearLayout>
+
     <ListView
         android:layout_width="match_parent"
         android:layout_height="351dp"
         android:id="@+id/eventList"
         android:layout_gravity="center_horizontal"
-        android:layout_weight="1.02" />
+        android:layout_weight="0.11" />
 
     <Button
         android:layout_width="wrap_content"
