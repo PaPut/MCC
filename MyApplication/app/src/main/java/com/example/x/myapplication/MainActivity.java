@@ -4,11 +4,14 @@ package com.example.x.myapplication;
         import org.apache.http.HttpResponse;
         import org.apache.http.client.HttpClient;
         import org.apache.http.client.methods.HttpGet;
+        import org.apache.http.client.methods.HttpPost;
+        import org.apache.http.entity.StringEntity;
         import org.apache.http.impl.client.DefaultHttpClient;
         import org.apache.http.protocol.BasicHttpContext;
         import org.apache.http.protocol.HttpContext;
         import android.app.Activity;
         import android.app.DatePickerDialog;
+        import android.app.TimePickerDialog;
         import android.content.Intent;
         import android.content.ContentResolver;
         import android.content.ContentUris;
@@ -27,16 +30,23 @@ package com.example.x.myapplication;
         import android.widget.DatePicker;
         import android.widget.EditText;
         import android.widget.ListView;
+        import android.widget.Spinner;
         import android.widget.TextView;
+        import android.widget.TimePicker;
 
         import org.apache.http.util.EntityUtils;
         import org.json.JSONArray;
         import org.json.JSONObject;
 
         import java.lang.reflect.Array;
+        import java.text.DateFormat;
+        import java.text.SimpleDateFormat;
         import java.util.ArrayList;
         import java.util.Calendar;
+        import java.util.Collections;
+        import java.util.Date;
         import java.util.List;
+        import java.util.Locale;
         import java.util.TimeZone;
 
 public class MainActivity extends Activity implements OnClickListener {
@@ -45,18 +55,52 @@ public class MainActivity extends Activity implements OnClickListener {
     List<String> googIds = new ArrayList<String>();  // List of events' googIds
     String eventId;
     String googId;
-    EditText month; // TODO
-    String monthText; // TODO
-
-
+    Calendar myCalendar = Calendar.getInstance();
+    EditText sort;
+    Spinner spinner;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         findViewById(R.id.my_button).setOnClickListener(this);
+        /*FOR CALENDAR testing
+        ContentResolver cr = getContentResolver();
+        ContentValues values = new ContentValues();
+        Cursor cur = null;
+        Uri uri = CalendarContract.Calendars.CONTENT_URI;
+        cr = getContentResolver();
+        uri = CalendarContract.Events.CONTENT_URI;
+        cur = cr.query(uri, new String[]{CalendarContract.Calendars._ID}, null, null, null);
+
+        while (cur.moveToNext()) {
+            System.out.println(cur.getString(0));
+        }
+*/      Button monthBut = (Button)findViewById(R.id.monthButton);
+        monthBut.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if(spinner.getSelectedItem().toString().equals("month")){
+                    new LongRunningGetIO("month?month="+sort.getText().toString()).execute();
+                    System.out.println("month?month="+sort.getText().toString());
+
+                }
+                if(spinner.getSelectedItem().toString().equals("day")){
+                    new LongRunningGetIO("day?day="+sort.getText().toString()).execute();
+                    System.out.println("day?day="+sort.getText().toString());
+
+                }
+                if(spinner.getSelectedItem().toString().equals("all")){
+                    new LongRunningGetIO("events").execute();
+
+                }
+            }
+
+
+        });
 
         Button addEvent = (Button)findViewById(R.id.addEventButton);
+        sort = (EditText)findViewById(R.id.editSort);
 
         // When the addEvent button is clicked it takes us to activity_addevent
         addEvent.setOnClickListener(new View.OnClickListener() {
@@ -66,6 +110,26 @@ public class MainActivity extends Activity implements OnClickListener {
                 startActivity(intent);
             }
         });
+
+        // When the sort EditText is clicked it shows the previously defined Time and Datepicker dialogs
+        sort.setOnClickListener(new OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                new DatePickerDialog(MainActivity.this, startDate, myCalendar
+                        .get(Calendar.YEAR), myCalendar.get(Calendar.MONTH),
+                        myCalendar.get(Calendar.DAY_OF_MONTH)).show();
+            }
+        });
+
+        spinner = (Spinner) findViewById(R.id.spinner1);
+
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
+                R.array.options, android.R.layout.simple_spinner_item);
+
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+
+        spinner.setAdapter(adapter);
 
         // ListView for events
         ListView list = (ListView)findViewById(R.id.eventList);
@@ -93,29 +157,51 @@ public class MainActivity extends Activity implements OnClickListener {
 
 
 
-        new LongRunningGetIO().execute();
+        new LongRunningGetIO("events").execute();
     }
 
+    // DatePicker dialog for the sort date (month, day and year)
+    DatePickerDialog.OnDateSetListener startDate = new DatePickerDialog.OnDateSetListener() {
 
+        @Override
+        public void onDateSet(DatePicker view, int year, int monthOfYear,
+                              int dayOfMonth) {
+            myCalendar.set(Calendar.YEAR, year);
+            myCalendar.set(Calendar.MONTH, monthOfYear);
+            myCalendar.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+            updateLabel(sort);
+        }
 
-    // Adding the new events
+    };
+
+    private void updateLabel(EditText e) {
+
+        String dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
+        SimpleDateFormat sdf = new SimpleDateFormat(dateFormat);
+
+        e.setText(sdf.format(myCalendar.getTime()));
+    }
+
+    // Adding the new events to Android Calendar
     public void addEvent(String title, long start, long end, String description){
         Boolean contains = false;
+
+        //Create Cursor
         ContentResolver cr = getContentResolver();
         ContentValues values = new ContentValues();
         Cursor cur = null;
-        Uri uri = CalendarContract.Events.CONTENT_URI;
-        long calID = 1;
+        Uri uri;
+        long calID = 2;
         TimeZone tz = TimeZone.getDefault();
         cr = getContentResolver();
         uri = CalendarContract.Events.CONTENT_URI;
         cur = cr.query(uri, new String[]{CalendarContract.Events.TITLE, CalendarContract.Events.DESCRIPTION, CalendarContract.Events.CALENDAR_ID,CalendarContract.Events.DTEND}, null, null, null);
 
+        //Looping through fields in Android db to check if exist
         while (cur.moveToNext()) {
             Calendar cal = Calendar.getInstance();
             cal.setTimeInMillis(cur.getLong(3));
-
-            if(cur.getString(0).equals(title) && cur.getString(1).equals(description) && Math.abs(cur.getLong(3)-end)<100000){
+            if(cur.getString(0).equals(title) && Math.abs(cur.getLong(3)-end)<100000){
                 contains = true;
             }
         }
@@ -134,13 +220,12 @@ public class MainActivity extends Activity implements OnClickListener {
     cur.close();
 
     }
+
+
     //Get calendar of Phone and add the missing to Cloud
 
-    public void getCalendarAndAdd(ArrayList<String> descriptions, ArrayList<String> titles, ArrayList<Long> endmillis) {
+    public void getEventsToAdd(ArrayList<String> descriptions, ArrayList<String> titles, ArrayList<Long> endmillis) {
 
-        long calID = 1;
-        long startMillis = 0;
-        long endMillis = 0;
         boolean add = true;
         ContentResolver cr = getContentResolver();
         ContentValues values = new ContentValues();
@@ -151,46 +236,57 @@ public class MainActivity extends Activity implements OnClickListener {
 
         while (cur.moveToNext()) {
             add = true;
-            System.out.println(cur.getString(0));
 
             for(int i = 0; i< descriptions.size();i++){
-                if(descriptions.get(i).equals(cur.getString(1)) && titles.get(i).equals(cur.getString(0))){
-                    System.out.println("____"+descriptions.get(i)+cur.getString(1));
+
+                if((titles.get(i).equals(cur.getString(0))) || cur.getLong(3) < 100000){
                     add = false;
                 }
             }
             if(add){
-            System.out.println("pitäisi lisätä");
+
+
             Calendar cal1 = Calendar.getInstance();
             cal1.setTimeInMillis(cur.getLong(3));
             Calendar cal2 = Calendar.getInstance();
             cal2.setTimeInMillis(cur.getLong(2));
-            //yyyy-MM-dd'T    'HH:mm:ss.SSSZ"
-            AddEvent newEVENT = new AddEvent(cur.getString(0),cal2.get(Calendar.YEAR)+"-"+cal2.get(Calendar.MONTH)+"-"+cal2.get(Calendar.DATE)+"'T'"+cal2.get(Calendar.HOUR)+":"+cal2.get(Calendar.MINUTE)+":"+cal2.get(Calendar.SECOND)+".SSSZ",cal1.get(Calendar.YEAR)+"-"+cal1.get(Calendar.MONTH)+"-"+cal1.get(Calendar.DATE)+"'T'"+cal1.get(Calendar.HOUR)+":"+cal1.get(Calendar.MINUTE)+":"+cal1.get(Calendar.SECOND)+".SSSZ", cur.getString(1));
-            newEVENT.post();
+            DateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ", Locale.getDefault());
+            String start = df.format(cal2.getTime());
+            String end = df.format(cal1.getTime());
+
+            //To clean some Android default events for better usability
+
+                if(!(Integer.toString(cal2.get(Calendar.YEAR)).contains("1970")) && !(Integer.toString(cal1.get(Calendar.YEAR)).contains("1970"))  && cal2.get(Calendar.YEAR)<2016) {
+                    System.out.println(cal2.get(Calendar.YEAR));
+                    new LongRunningGetIO("events").post(cur.getString(0),start, end, cur.getString(1));
+
+            }
         }
         }
         cur.close();
     }
 
     //The changes doesn't happen always instantly, f.ex. after restart program can be seen
-    //At the moment deletes by title
+
+
+    //At the moment deletes by title, not used at the moment.
     public void deleteItem(String query){
 
         String[] EVENT_PROJECTION = new String[] {
                 CalendarContract.Events._ID,
                 CalendarContract.Events.TITLE,
                 CalendarContract.Events.DTSTART,
-                CalendarContract.Events.DTEND
+                CalendarContract.Events.DTEND,
+                CalendarContract.Calendars._ID
         };
 
         ContentResolver cr = getContentResolver();
         Uri uri = CalendarContract.Events.CONTENT_URI;
-        Cursor cur = cr.query(uri, EVENT_PROJECTION, null, null, null);
+        Cursor cur = cr.query(uri, EVENT_PROJECTION,null, null, null);
 
         while (cur.moveToNext()) {
             if(cur.getString(1).contains(query)){
-                System.out.println("Del"+cur.getString(1));
+                System.out.println("Del"+cur.getString(1)+cur.getString(4));
                 Uri deleteUri = ContentUris.withAppendedId(uri,cur.getLong(0));
                 System.out.println(getContentResolver().delete(deleteUri, null, null));
             }
@@ -204,10 +300,15 @@ public class MainActivity extends Activity implements OnClickListener {
     public void onClick(View arg0) {
         Button b = (Button)findViewById(R.id.my_button);
         b.setClickable(true);
-        new LongRunningGetIO().execute();
+        new LongRunningGetIO("events").execute();
     }
 
     private class LongRunningGetIO extends AsyncTask <Void, Void, List<String>> {
+        String events;
+
+        public LongRunningGetIO(String events) {
+            this.events = events;
+        }
 
         //Parsing from json to millis
         protected long parseToMillis(String json){
@@ -225,8 +326,11 @@ public class MainActivity extends Activity implements OnClickListener {
         protected List<String> doInBackground(Void... params) {
             HttpClient httpClient = new DefaultHttpClient();
             HttpContext localContext = new BasicHttpContext();
-            HttpGet httpGet = new HttpGet("http://10.0.2.2:3000/events");
+            HttpGet httpGet = new HttpGet("http://10.0.2.2:3000/"+events);
             List<String> events = new ArrayList<String>();
+            ArrayList<String> titles = new ArrayList<String>();
+            ArrayList<String> descriptions = new ArrayList<String>();
+            ArrayList<Long> ends = new ArrayList<Long>();
             try {
                 HttpResponse response = httpClient.execute(httpGet, localContext);
 
@@ -237,9 +341,6 @@ public class MainActivity extends Activity implements OnClickListener {
                     String retSrc = EntityUtils.toString(entity);
 
                     JSONArray jsonArray = new JSONArray(retSrc);
-                    ArrayList<String> titles = new ArrayList<String>();
-                    ArrayList<String> descriptions = new ArrayList<String>();
-                    ArrayList<Long> ends = new ArrayList<Long>();
 
                     for(int i=0; i < jsonArray.length(); i++){
                         String text = "";
@@ -253,35 +354,62 @@ public class MainActivity extends Activity implements OnClickListener {
                         String end = jsonObject.optString("end").toString();
                         ends.add(parseToMillis(end));
                         String description = jsonObject.optString("description").toString();
-                        descriptions.add(description);
                         //FOR event adding
-                        addEvent(name, parseToMillis(start), parseToMillis(end), description);
-                        if (description == "null") {
+                        if (description == null) {
                             description = "";
                         }
-
+                        descriptions.add(description);
+                        addEvent(name, parseToMillis(start), parseToMillis(end), description);
                         eventIds.add(id);
                         googIds.add(id2);
-                        text += name + "\nStart Date: "+ start +" \nEnd Date: "+ end +" \nDescription: "+ description +" \n\n";
+                        text +="Start Date: "+ start +" \nEnd Date: "+ end +"\n"+name+" \nDescription: "+ description +" \n\n";
                         events.add(text);
                     }
-                    getCalendarAndAdd(descriptions,titles,ends);
+                    Collections.sort(events);
+                    getEventsToAdd(descriptions, titles, ends);
+
                 }
             } catch (Exception e) {
-
+                System.out.println(e);
             }
+
             return events;
         }
 
+        protected void post(String name, String start, String end, String description){
+            HttpClient httpClient = new DefaultHttpClient();
+            HttpPost httpPost = new HttpPost("http://10.0.2.2:3000/events");
 
+            try {
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("name", name);
+                jsonObject.put("start", start);
+                jsonObject.put("end", end);
+                jsonObject.put("description", description);
+
+                if (jsonObject != null) {
+                    httpPost.setHeader("Accept", "application/json");
+                    httpPost.setHeader("Content-type", "application/json");
+
+                    httpPost.setEntity(new StringEntity(jsonObject.toString()));
+                    HttpResponse response = httpClient.execute(httpPost);
+                }
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
+        }
         protected void onPostExecute(List<String> results) {
+            ListView list = (ListView)findViewById(R.id.eventList);
+            list.setAdapter(null);
             if (results!=null) {
                 ArrayAdapter<String> adapter = new ArrayAdapter<String>(MainActivity.this, R.layout.textview_events, results);
-                ListView list = (ListView)findViewById(R.id.eventList);
                 list.setAdapter(adapter);
             }
             Button b = (Button)findViewById(R.id.my_button);
             b.setClickable(true);
+            System.out.println("OnPostExcecute");
         }
 
 

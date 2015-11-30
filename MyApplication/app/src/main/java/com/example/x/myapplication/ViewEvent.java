@@ -63,10 +63,13 @@ public class ViewEvent extends ActionBarActivity {
         eventId = intent.getStringExtra("id");
         googId = intent.getStringExtra("googId");
         String[] data = intent.getStringArrayExtra("data");
+        for(int i = 0; i<data.length; i++){
+            System.out.println(data[i].toString());
 
-        title.setText(data[0]);
-        start.setText(data[1].split(" ")[2]);
-        end.setText(data[2].split(" ")[2]);
+        }
+        title.setText(data[2]);
+        start.setText(data[0].split(" ")[2]);
+        end.setText(data[1].split(" ")[2]);
         description.setText("");
 
         try {

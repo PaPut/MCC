@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="options">
+        <item>month</item>
+        <item>day</item>
+        <item>all</item>
+    </string-array>
+</resources>

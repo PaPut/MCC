@@ -24,7 +24,7 @@
         android:id="@+id/editStart"
         android:layout_gravity="center_horizontal"
         android:hint="Start Date"
-        android:inputType="datetime" />
+        android:inputType="date" />
 
     <EditText
         android:layout_width="match_parent"
