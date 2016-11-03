@@ -64,6 +64,7 @@ public class MainActivity extends Activity implements OnClickListener {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         findViewById(R.id.my_button).setOnClickListener(this);
+        deleteItem("");
         /*FOR CALENDAR testing
         ContentResolver cr = getContentResolver();
         ContentValues values = new ContentValues();
@@ -76,18 +77,21 @@ public class MainActivity extends Activity implements OnClickListener {
         while (cur.moveToNext()) {
             System.out.println(cur.getString(0));
         }
-*/      Button monthBut = (Button)findViewById(R.id.monthButton);
+
+
+       /*Setting the onclicklistener for Sorting button, different GET-queries for different spinner options*/
+    Button monthBut = (Button)findViewById(R.id.monthButton);
         monthBut.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
                 if(spinner.getSelectedItem().toString().equals("month")){
-                    new LongRunningGetIO("month?month="+sort.getText().toString()).execute();
-                    System.out.println("month?month="+sort.getText().toString());
+                    new LongRunningGetIO("month/"+sort.getText().toString()).execute();
+                    System.out.println("month/"+sort.getText().toString());
 
                 }
                 if(spinner.getSelectedItem().toString().equals("day")){
-                    new LongRunningGetIO("day?day="+sort.getText().toString()).execute();
-                    System.out.println("day?day="+sort.getText().toString());
+                    new LongRunningGetIO("day/"+sort.getText().toString()).execute();
+                    System.out.println("day/"+sort.getText().toString());
 
                 }
                 if(spinner.getSelectedItem().toString().equals("all")){
@@ -122,6 +126,8 @@ public class MainActivity extends Activity implements OnClickListener {
             }
         });
 
+        //spinner setup, array in the values folder, idea from
+        //http://developer.android.com/guide/topics/ui/controls/spinner.html
         spinner = (Spinner) findViewById(R.id.spinner1);
 
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
@@ -156,6 +162,7 @@ public class MainActivity extends Activity implements OnClickListener {
         });
 
 
+        //running the get on asynctask
 
         new LongRunningGetIO("events").execute();
     }
@@ -186,7 +193,7 @@ public class MainActivity extends Activity implements OnClickListener {
     public void addEvent(String title, long start, long end, String description){
         Boolean contains = false;
 
-        //Create Cursor
+        //Create Cursor http://developer.android.com/guide/topics/providers/calendar-provider.html
         ContentResolver cr = getContentResolver();
         ContentValues values = new ContentValues();
         Cursor cur = null;
@@ -231,7 +238,7 @@ public class MainActivity extends Activity implements OnClickListener {
         ContentValues values = new ContentValues();
         Cursor cur = null;
         Uri uri = CalendarContract.Events.CONTENT_URI;
-
+        //cursor
         cur = cr.query(uri, new String[]{CalendarContract.Events.TITLE, CalendarContract.Events.DESCRIPTION, CalendarContract.Events.DTSTART,CalendarContract.Events.DTEND}, null, null, null);
 
         while (cur.moveToNext()) {
@@ -245,7 +252,7 @@ public class MainActivity extends Activity implements OnClickListener {
             }
             if(add){
 
-
+            //date manipulation
             Calendar cal1 = Calendar.getInstance();
             cal1.setTimeInMillis(cur.getLong(3));
             Calendar cal2 = Calendar.getInstance();
@@ -269,7 +276,7 @@ public class MainActivity extends Activity implements OnClickListener {
     //The changes doesn't happen always instantly, f.ex. after restart program can be seen
 
 
-    //At the moment deletes by title, not used at the moment.
+    //At the moment deletes by title, used for testing
     public void deleteItem(String query){
 
         String[] EVENT_PROJECTION = new String[] {
@@ -294,6 +301,8 @@ public class MainActivity extends Activity implements OnClickListener {
         cur.close();
 
     }
+
+    //refresh button
     @Override
 
 
@@ -303,6 +312,8 @@ public class MainActivity extends Activity implements OnClickListener {
         new LongRunningGetIO("events").execute();
     }
 
+
+    //async task for handling the events with server/cloud, the ips are for testing
     private class LongRunningGetIO extends AsyncTask <Void, Void, List<String>> {
         String events;
 
@@ -365,6 +376,7 @@ public class MainActivity extends Activity implements OnClickListener {
                         text +="Start Date: "+ start +" \nEnd Date: "+ end +"\n"+name+" \nDescription: "+ description +" \n\n";
                         events.add(text);
                     }
+                    //sort the collection and add the events from phone to cloud
                     Collections.sort(events);
                     getEventsToAdd(descriptions, titles, ends);
 
@@ -375,7 +387,7 @@ public class MainActivity extends Activity implements OnClickListener {
 
             return events;
         }
-
+        //for post/adding to cloud
         protected void post(String name, String start, String end, String description){
             HttpClient httpClient = new DefaultHttpClient();
             HttpPost httpPost = new HttpPost("http://10.0.2.2:3000/events");
@@ -400,6 +412,7 @@ public class MainActivity extends Activity implements OnClickListener {
             }
 
         }
+        //finalise the asynctask
         protected void onPostExecute(List<String> results) {
             ListView list = (ListView)findViewById(R.id.eventList);
             list.setAdapter(null);
